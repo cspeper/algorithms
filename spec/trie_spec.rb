@@ -60,6 +60,23 @@ describe "non-empty trie" do
 
 end
 
+describe "remove from trie" do
+  before(:each) do
+    @trie = Containers::Trie.new
+    @trie.push("scott", 1)
+    @trie.push("scott", 2)
+    @trie.push("scott", 3)
+    @trie.remove("scott", 1)
+  end
+
+  it "should match prefix" do
+    expect(@trie.get("scott")).to eq([2,3])
+    @trie.remove("scott", 2)
+    expect(@trie.get("scott")).to eq([3])
+  end
+
+
+end
 
 describe "prefix with trie" do
   before(:each) do

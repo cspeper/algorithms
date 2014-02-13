@@ -54,11 +54,19 @@ class Containers::Trie
   #   t = Containers::Trie.new
   #   t.get("hello") = "world"
   #   t.get("non-existant") #=> nil
+
+  def remove(key, value = nil)
+    key = key.to_s
+    return nil if key.empty?
+    node = get_recursive(@root, key, 0)
+    node.value = node.value.reject{|v| value.nil? or v == value} if node
+  end
+
   def get(key)
     key = key.to_s
     return nil if key.empty?
     node = get_recursive(@root, key, 0)
-    node ? node.last : nil
+    node ? node.value : nil
   end
   alias_method :[], :get
   
@@ -216,7 +224,7 @@ class Containers::Trie
     elsif (index < string.length-1) # We're not at the end of the input string; add next char
       return get_recursive(node.mid, string, index+1)
     else
-      return node.last? ? [node.char, node.value] : []
+      return node.last? ? node : nil
     end
   end
 end
