@@ -62,25 +62,6 @@ class Containers::Trie
   end
   alias_method :[], :get
   
-  # Returns the longest key that has a prefix in common with the parameter string. If
-  # no match is found, the blank string "" is returned.
-  #
-  # Complexity: O(m) worst case
-  #
-  #   t = Containers::Trie.new
-  #   t.push("Hello", "World")
-  #   t.push("Hello, brother", "World")
-  #   t.push("Hello, bob", "World")
-  #   t.longest_prefix("Hello, brandon") #=> "Hello"
-  #   t.longest_prefix("Hel") #=> ""
-  #   t.longest_prefix("Hello") #=> "Hello"
-  def longest_prefix(string)
-    string = string.to_s
-    return nil if string.empty?
-    len = prefix_recursive(@root, string, 0)
-    string[0...len]
-  end
-  
   # Returns a sorted array containing strings that match the parameter string. The wildcard
   # characters that match any character are '*' and '.' If no match is found, an empty
   # array is returned.
@@ -101,14 +82,57 @@ class Containers::Trie
     ary.flatten.compact.sort
   end
 
+  # Returns the values whose keys have a prefix in common with the parameter string. If
+  # no match is found, an empty array is returned is returned.
+  #
+  # Complexity: O(m) worst case
+  #
+  #   t = Containers::Trie.new
+  #   t.push("Hello", "World")
+  #   t.push("Hello, brother", "World")
+  #   t.push("Hello, bob", "World")
+  #   t.longest_prefix("Hello, brandon") #=> "Hello"
+  #   t.longest_prefix("Hel") #=> ""
+  #   t.longest_prefix("Hello") #=> "Hello"
+  def longest_prefix(string)
+    string = string.to_s
+    return nil if string.empty?
+    len = prefix_recursive(@root, string, 0)
+    string[0...len]
+  end
+
+  # Returns the longest key that has a prefix in common with the parameter string. If
+  # no match is found, the blank string "" is returned.
+  #
+  # Complexity: O(m) worst case
+  #
+  #   t = Containers::Trie.new
+  #   t.push("Hello", "World")
+  #   t.push("Hello, brother", "World")
+  #   t.push("Hello, bob", "World")
+  #   t.longest_prefix("Hello, brandon") #=> "Hello"
+  #   t.longest_prefix("Hel") #=> ""
+  #   t.longest_prefix("Hello") #=> "Hello"
+  def with_prefix(string)
+    string = string.to_s
+    return [] if string.empty?
+    ary = []
+    ary << with_prefix_recursive(@root, string, 0)
+    ary.flatten.compact.sort
+  end
+
   class Node # :nodoc: all
     attr_accessor :left, :mid, :right, :char, :value, :end
     
-    def initialize(char, value)
+    def initialize(char)
       @char = char
-      @value = value
       @left = @mid = @right = nil
+      @value = []
       @end = false
+    end
+
+    def all_children
+      (@value + (@left ? @left.all_children : []) + (@right ? @right.all_children : []) + (@mid ? @mid.all_children : []))
     end
     
     def last?
@@ -132,6 +156,22 @@ class Containers::Trie
     end
     arr
   end
+
+  def with_prefix_recursive(node, string, index)
+    return [] if node.nil?
+    char = string[index]
+    if index == string.length
+      arr = node.all_children
+    elsif (char < node.char)
+      arr = with_prefix_recursive(node.left, string, index)
+    elsif (char > node.char)
+      arr = with_prefix_recursive(node.right, string, index)
+    else
+      arr = (node.value.nil? or (index != string.length - 1))  ? [] : [node.value]
+      arr.concat(with_prefix_recursive(node.mid, string, index+1))
+    end
+    arr
+  end
   
   def prefix_recursive(node, string, index)
     return 0 if node.nil? || index == string.length
@@ -151,7 +191,7 @@ class Containers::Trie
   
   def push_recursive(node, string, index, value)
     char = string[index]
-    node = Node.new(char, value) if node.nil?
+    node = Node.new(char) if node.nil?
     if (char < node.char)
       node.left = push_recursive(node.left, string, index, value)
     elsif (char > node.char)
@@ -160,7 +200,7 @@ class Containers::Trie
       node.mid = push_recursive(node.mid, string, index+1, value)
     else
       node.end = true
-      node.value = value
+      node.value << value
     end
     node
   end
@@ -176,7 +216,7 @@ class Containers::Trie
     elsif (index < string.length-1) # We're not at the end of the input string; add next char
       return get_recursive(node.mid, string, index+1)
     else
-      return node.last? ? [node.char, node.value] : nil
+      return node.last? ? [node.char, node.value] : []
     end
   end
 end

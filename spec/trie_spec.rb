@@ -7,13 +7,13 @@ describe "empty trie" do
   end
 
   it "should not get or has_key?" do
-    @trie.get("anything").should be_nil
-    @trie.has_key?("anything").should be_false
+    expect(@trie.get("anything")).to eq(nil)
+    expect(@trie.has_key?("anything")).to eq(false)
   end
 
   it "should not have longest_prefix or match wildcards" do
-    @trie.wildcard("an*thing").should eql([])
-    @trie.longest_prefix("an*thing").should eql("")
+    expect(@trie.wildcard("an*thing")).to eql([])
+    expect(@trie.longest_prefix("an*thing")).to eql("")
   end
 end
 
@@ -27,33 +27,53 @@ describe "non-empty trie" do
   end
 
   it "should has_key? keys it has" do
-    @trie.has_key?("Hello").should be_true
-    @trie.has_key?("Hello, brother").should be_true
-    @trie.has_key?("Hello, bob").should be_true
+    expect(@trie.has_key?("Hello")).to eq(true)
+    expect(@trie.has_key?("Hello, brother")).to eq(true)
+    expect(@trie.has_key?("Hello, bob")).to eq(true)
   end
 
   it "should not has_key? keys it doesn't have" do
-    @trie.has_key?("Nope").should be_false
+    expect(@trie.has_key?("Nope")).to eq(false)
   end
 
   it "should get values" do
-    @trie.get("Hello").should eql("World")
+    expect(@trie.get("Hello")).to eq(["World"])
   end
 
-  it "should overwrite values" do
+  it "should concat values" do
     @trie.push("Hello", "John")
-    @trie.get("Hello").should eql("John")
+    expect(@trie.get("Hello")).to eq(%w[World John])
   end
 
   it "should return longest prefix" do
-    @trie.longest_prefix("Hello, brandon").should eql("Hello")
-    @trie.longest_prefix("Hel").should eql("")
-    @trie.longest_prefix("Hello").should eql("Hello")
-    @trie.longest_prefix("Hello, bob").should eql("Hello, bob")
+    expect(@trie.longest_prefix("Hello, brandon")).to eq("Hello")
+    expect(@trie.longest_prefix("Hel")).to eq("")
+    expect(@trie.longest_prefix("Hello")).to eq("Hello")
+    expect(@trie.longest_prefix("Hello, bob")).to eq("Hello, bob")
   end
 
   it "should match wildcards" do
-    @trie.wildcard("H*ll.").should eql(["Hello", "Hilly"])
-    @trie.wildcard("Hel").should eql([])
+    expect(@trie.wildcard("H*ll.")).to eq(["Hello", "Hilly"])
+    expect(@trie.wildcard("Hel")).to eq([])
   end
+
+
+end
+
+
+describe "prefix with trie" do
+  before(:each) do
+    @trie = Containers::Trie.new
+    @trie.push("scott", 1)
+    @trie.push("sco", 2)
+    @trie.push("scottie", 3)
+  end
+
+  it "should match prefix" do
+    expect(@trie.with_prefix("sco")).to eq([1,2,3])
+    expect(@trie.with_prefix("scot")).to eq([1,3])
+    expect(@trie.with_prefix("abc")).to eq([])
+  end
+
+
 end
